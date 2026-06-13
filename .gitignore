@@ -1,3 +1,4 @@
 nano .gitignore
 # Ignore all dataset folders
 data/
+.bashrc
