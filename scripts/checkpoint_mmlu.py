@@ -16,13 +16,11 @@ results = []
 
 for root_dir in CHECKPOINT_DIRS:
     checkpoints = sorted(
-        glob.glob(
-            os.path.join(
-                root_dir,
-                "checkpoint-*"
-            )
-        )
+        glob.glob(os.path.join(root_dir, "checkpoint-*"))
     )
+
+    if os.path.exists(os.path.join(root_dir, "config.json")):
+        checkpoints.append(root_dir)
 
     for ckpt in checkpoints:
         print(f"Evaluating {ckpt}")

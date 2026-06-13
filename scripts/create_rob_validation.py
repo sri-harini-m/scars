@@ -3,7 +3,7 @@
 from datasets import load_from_disk
 
 ds = load_from_disk(
-    "data/openhermes"
+    "data/openhermes_small"
 )
 
 split = ds["train"].train_test_split(

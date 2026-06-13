@@ -53,7 +53,7 @@ def load_training_dataset(dataset_name):
 
     elif dataset_name == "openhermes":
         ds = load_from_disk(
-            "data/openhermes"
+            "data/openhermes_small"
         )
         ds = ds.map(
             format_openhermes

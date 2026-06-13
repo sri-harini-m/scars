@@ -58,7 +58,7 @@ dataset = dataset.map(
 print("Loading model...")
 model = AutoModelForCausalLM.from_pretrained(
     cfg["model_name"],
-    torch_dtype=torch.float16,
+    torch_dtype=torch.bfloat16,
 )
 
 training_args = TrainingArguments(
@@ -70,8 +70,9 @@ training_args = TrainingArguments(
     save_strategy="steps",
     save_steps=cfg["save_steps"],
     bf16=True,
+    save_total_limit=2,     
+    save_only_model=True, 
     logging_steps=20,
-    save_total_limit=None,
     report_to="none"
 )
 
@@ -84,9 +85,9 @@ trainer = Trainer(
 trainer.train()
 
 trainer.save_model(
-    f"{cfg['output_dir']}/final"
+    cfg['output_dir']
 )
 
 tokenizer.save_pretrained(
-    f"{cfg['output_dir']}/final"
+    cfg['output_dir']
 )

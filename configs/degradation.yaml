@@ -2,7 +2,7 @@
 
 run_name: degradation
 
-model_name: meta-llama/Llama-3.1-8B-Instruct
+model_name: checkpoints/original
 
 dataset: codealpaca
 

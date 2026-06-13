@@ -2,7 +2,7 @@
 
 run_name: recovery
 
-model_name: checkpoints/degraded/final
+model_name: checkpoints/degraded
 
 dataset: openhermes
 

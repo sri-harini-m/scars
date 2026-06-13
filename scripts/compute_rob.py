@@ -3,18 +3,19 @@
 import os
 import json
 import copy
+import argparse
 import torch
 import numpy as np
 from tqdm import tqdm
 from datasets import load_from_disk
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import matplotlib.pyplot as plt
+from utils.config import load_config
+from utils.dataset_utils import format_openhermes
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# BASE_MODEL = "checkpoints/original"
-BASE_MODEL = "meta-llama/Llama-3.1-8B-Instruct"
-TARGET_MODEL = "checkpoints/recovered/final"
+BASE_MODEL = "checkpoints/original"
 
 N_POINTS = 30
 MAX_SAMPLES = 512
@@ -29,11 +30,12 @@ def load_model(path):
     model.eval()
     return model
 
-def load_eval_dataset():
+def load_eval_dataset(tokenizer):
     ds = load_from_disk("data/openhermes_val")
     texts = []
-    for x in ds["validation"]:
-        txt = x["text"].strip()
+    for x in ds:
+        messages = format_openhermes(x)["messages"]
+        txt = tokenizer.apply_chat_template(messages, tokenize=False).strip()
         if len(txt) > 100:
             texts.append(txt)
         if len(texts) >= MAX_SAMPLES:
@@ -68,6 +70,14 @@ def interpolate_model(model_a, model_b, alpha):
 
 
 def main():
+        
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--target", required=True, help="path to target checkpoint")
+    parser.add_argument("--tag", required=True, help="label for output files, e.g. 'recovered' or 'control'")
+    args = parser.parse_args()
+
+    TARGET_MODEL = args.target
+    
     os.makedirs(
         "results/rob",
         exist_ok=True
@@ -82,7 +92,7 @@ def main():
 
     thetar = load_model(TARGET_MODEL).to(DEVICE)
 
-    texts = load_eval_dataset()
+    texts = load_eval_dataset(tokenizer)
 
     alphas = np.linspace(0, 1, N_POINTS)
 
@@ -110,10 +120,7 @@ def main():
     plt.ylabel("loss")
     plt.title("ROB interpolation curve")
 
-    plt.savefig(
-        "results/rob/loss_curve.png",
-        dpi=300
-    )
+    plt.savefig(f"results/rob/loss_curve_{args.tag}.png", dpi=300)
 
     result = {
         "rob": float(rob),
@@ -122,7 +129,7 @@ def main():
         "loss_end": float(losses[-1])
     }
 
-    with open("results/rob/rob.json", "w") as f:
+    with open(f"results/rob/rob_{args.tag}.json", "w") as f:
         json.dump(result, f, indent=2)
 
     print(result)
