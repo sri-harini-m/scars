@@ -1,0 +1,25 @@
+#configs/degradation.yaml
+
+run_name: degradation
+
+model_name: meta-llama/Llama-3.1-8B-Instruct
+
+dataset: codealpaca
+
+output_dir: checkpoints/degraded
+
+epochs: 1
+
+learning_rate: 2e-5
+
+weight_decay: 0.01
+
+max_length: 2048
+
+batch_size: 1
+
+gradient_accumulation_steps: 16
+
+save_steps: 200
+
+bf16: true
