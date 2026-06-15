@@ -13,11 +13,8 @@ print("Downloading OpenHermes...")
 openhermes = load_dataset("teknium/OpenHermes-2.5")
 openhermes.save_to_disk("data/openhermes")
 
-# print("Downloading WikiText...")
-# wikitext = load_dataset(
-#     "wikitext",
-#     "wikitext-103-v1"
-# )
-# wikitext.save_to_disk("data/wikitext103")
+print("Downloading WikiText-103...")
+wikitext = load_dataset("wikitext", "wikitext-103-v1")
+wikitext.save_to_disk("data/wikitext103")
 
 print("Done.")

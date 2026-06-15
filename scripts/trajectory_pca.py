@@ -93,12 +93,12 @@ def main():
 
     plt.figure(figsize=(9,7))
 
+    original_indices = [i for i, l in enumerate(labels) if l == "original"]
     for run in ["degraded", "recovered", "control"]:
         idx = [i for i, l in enumerate(labels) if l == run]
         if not idx:
             continue
-        origin_idx = [i for i in idx if labels[i] == "original"]
-        path_idx = (origin_idx + idx) if run == "degraded" else idx
+        path_idx = (original_indices + idx) if run == "degraded" else idx
 
         xs = coords[path_idx, 0]
         ys = coords[path_idx, 1]

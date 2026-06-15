@@ -51,7 +51,7 @@ def tokenize(example):
 dataset = dataset.map(
     tokenize, 
     batched=True,
-    remove_columns=dataset.column_names,
+    remove_columns=dataset["train"].column_names,
     load_from_cache_file=False
 )
 

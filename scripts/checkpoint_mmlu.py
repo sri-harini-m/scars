@@ -12,104 +12,146 @@ CHECKPOINT_DIRS = [
     "checkpoints/control"
 ]
 
-results = []
+def evaluate_checkpoint(ckpt):
+    ckpt_tag = ckpt.replace("/", "_").replace("\\", "_")
+    output_path = f"/tmp/mmlu_{ckpt_tag}.json"
 
-for root_dir in CHECKPOINT_DIRS:
-    checkpoints = sorted(
-        glob.glob(os.path.join(root_dir, "checkpoint-*"))
-    )
+    if os.path.exists(output_path):
+        print(f" [cached] {ckpt}")
+    else:
+        print(f" [running] {ckpt}")
+        cmd = [
+            "lm_eval",
+            "--model", "hf",
+            "--model_args", f"pretrained={ckpt}",
+            "--tasks", "mmlu",
+            "--batch_size", "auto",
+            "--output_path", output_path
+        ]
+        subprocess.run(cmd, check=True)
 
-    if os.path.exists(os.path.join(root_dir, "config.json")):
-        checkpoints.append(root_dir)
+    with open(output_path) as f:
+        data = json.load(f)
 
-    for ckpt in checkpoints:
-        print(f"Evaluating {ckpt}")
-        # output_path = (f"/tmp/mmlu_result.json")
-        ckpt_tag = ckpt.replace("/", "_").replace("\\", "_")
-        output_path = f"/tmp/mmlu_{ckpt_tag}.json"
+    return data["results"]["mmlu"]["acc,none"]
 
-        cmd = f"""
-        lm_eval \
-            --model hf \
-            --model_args pretrained={ckpt} \
-            --tasks mmlu \
-            --batch_size auto \
-            --output_path {output_path}
-        """
+def collect_checkpoints(root_dirs):
+    entries = [] 
+    for root_dir in root_dirs:
+        run_name = os.path.basename(root_dir)
 
-        subprocess.run(cmd, shell=True, check=True)
+        step_ckpts = sorted(
+            glob.glob(os.path.join(root_dir, "checkpoint-*")),
+            key=lambda p: int(p.split("-")[-1])
+        )
+        for ckpt in step_ckpts:
+            entries.append((run_name, ckpt))
 
-        with open(output_path, "r") as f:
-            data = json.load(f)
+        if os.path.exists(os.path.join(root_dir, "config.json")):
+            entries.append((run_name, root_dir))
 
-        score = data["results"]["mmlu"]["acc,none"]
+    return entries
 
-        results.append(
-            {
-                "checkpoint": ckpt,
-                "run": os.path.basename(root_dir),
-                "mmlu": score
-            }
+def main():
+    os.makedirs("results/mmlu", exist_ok=True)
+    entries = collect_checkpoints(CHECKPOINT_DIRS)
+
+    if not entries:
+        print(
+            "No checkpoints found."
+            "Please run train.py with degredation, recovery, and control configs first."
+        )
+        return
+    
+    results = []
+    for run_name, ckpt in entries:
+        print(f"\nEvaluating [{run_name}] {ckpt}")
+        score = evaluate_checkpoint(ckpt)
+        results.append({
+            "run": run_name,
+            "checkpoint": ckpt,
+            "mmlu": score,
+        })
+        print(f"  MMLU: {score:.4f}")
+ 
+    df = pd.DataFrame(results)
+    csv_path = "results/mmlu/all_checkpoints.csv"
+    df.to_csv(csv_path, index=False)
+    print(f"\nSaved {csv_path}")
+    print(df.to_string())
+
+    recovered_rows = df[df["run"] == "recovered"].copy()
+ 
+    if recovered_rows.empty:
+        print("\nNo recovered checkpoints found. Run configs/recovery.yaml first.")
+        return
+    
+    thetar_row = recovered_rows.iloc[-1]
+    thetar_path = thetar_row["checkpoint"]
+    thetar_mmlu = thetar_row["mmlu"]
+    print(f"\ntheta_r: {thetar_path}  (MMLU={thetar_mmlu:.4f})")
+
+    control_rows = df[df["run"] == "control"].copy()
+ 
+    if control_rows.empty:
+        print(
+            "\nNo control checkpoints found. "
+            "Run train.py --config configs/control.yaml first, "
+            "then re-run this script."
         )
 
-
-os.makedirs("results/mmlu", exist_ok=True)
-df = pd.DataFrame(results)
-df.to_csv("results/mmlu/all_checkpoints.csv", index=False)
-print(df.to_string())
-
-recovered= "checkpoints/recovered"
-if os.path.exists(recovered):
-    output_path = "/tmp/mmlu_thetar.json"
-    cmd = (f"""an
-        lm_eval \
-        --model hf \
-        --model_args pretrained={recovered} \
-        --tasks mmlu \
-        --batch_size auto \
-        --output_path {output_path}"""
-    )
-    subprocess.run(cmd, shell=True, check=True)
-    with open(output_path) as f:
-        thetar_mmlu = json.load(f)["results"]["mmlu"]["acc,none"]
-    print(f"\ntheta_r MMLU: {thetar_mmlu:.4f}")
-else:
-    recovered_rows = df[df["run"] == "recovered"]
-    thetar_mmlu = recovered_rows["mmlu"].max()
-    print(f"\ntheta_r MMLU (estimated from checkpoints): {thetar_mmlu:.4f}")
-
-control_rows = df[df["run"] == "control"].copy()
-if control_rows.empty:
-    print(
-        "No control checkpoints found. "
-        "Run train.py --config configs/control.yaml first."
-    )
-else:
-    control_rows["mmlu_diff"] = (
-        control_rows["mmlu"] - thetar_mmlu
-    ).abs()
+        with open("results/mmlu/theta_r.json", "w") as f:
+            json.dump({
+                "theta_r": thetar_path,
+                "theta_r_mmlu": float(thetar_mmlu),
+            }, f, indent=2)
+        return
+ 
+    control_rows["mmlu_diff"] = (control_rows["mmlu"] - thetar_mmlu).abs()
     theta_ft_row = control_rows.loc[control_rows["mmlu_diff"].idxmin()]
     theta_ft_path = theta_ft_row["checkpoint"]
     theta_ft_mmlu = theta_ft_row["mmlu"]
-
+    mmlu_diff = theta_ft_row["mmlu_diff"]
+ 
     print(
-        f"\ntheta_ft identified: {theta_ft_path}"
-        f"  (MMLU={theta_ft_mmlu:.4f}, "
-        f"diff from theta_r={theta_ft_row['mmlu_diff']:.4f})"
+        f"theta_ft: {theta_ft_path}"
+        f"  (MMLU={theta_ft_mmlu:.4f}, |diff from theta_r|={mmlu_diff:.4f})"
     )
-    print(
-        "\nNext step:\n"
-        f"  python scripts/compute_control_rob.py --theta_ft {theta_ft_path}"
-    )
-
-    with open("results/mmlu/theta_ft.json", "w") as f:
-        json.dump(
-            {
-                "theta_ft": theta_ft_path,
-                "theta_ft_mmlu": float(theta_ft_mmlu),
-                "thetar_mmlu": float(thetar_mmlu),
-                "mmlu_diff": float(theta_ft_row["mmlu_diff"]),
-            },
-            f,
-            indent=2,
+ 
+    if mmlu_diff > 0.02:
+        print(
+            f"\nWARNING: best-matched control checkpoint is {mmlu_diff:.4f} MMLU "
+            "away from theta_r. Consider running control training longer / with "
+            "more checkpoint saves (lower save_steps) to get a tighter match."
         )
+
+    summary = {
+        "theta_r": thetar_path,
+        "theta_r_mmlu": float(thetar_mmlu),
+        "theta_ft": theta_ft_path,
+        "theta_ft_mmlu": float(theta_ft_mmlu),
+        "mmlu_diff": float(mmlu_diff),
+    }
+    summary_path = "results/mmlu/theta_ft.json"
+    with open(summary_path, "w") as f:
+        json.dump(summary, f, indent=2)
+    print(f"\nSaved {summary_path}")
+ 
+    print("\n--- Next steps ---")
+    print(
+        f"python scripts/compute_rob.py "
+        f"--target {thetar_path} --tag recovered"
+    )
+    print(
+        f"python scripts/compute_rob.py "
+        f"--target {theta_ft_path} --tag control"
+    )
+    print("python scripts/weight_distance.py")
+    print("python scripts/trajectory_pca.py")
+ 
+ 
+if __name__ == "__main__":
+    main()
+ 
+
+    

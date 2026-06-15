@@ -1,13 +1,13 @@
 #utils/model_utils.py
 
-from transformers import AutoModelForCausalLM
-from transformers import AutoTokenizer
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def load_model(model_path, bf16=True):
 
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        torch_dtype="auto",
+        torch_dtype=torch.bfloat16,
         trust_remote_code=True,
     )
 
