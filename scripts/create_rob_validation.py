@@ -2,17 +2,13 @@
 
 from datasets import load_from_disk
 
-ds = load_from_disk(
-    "data/openhermes_small"
-)
+ds = load_from_disk("data/openhermes_small")
 
-split = ds["train"].train_test_split(
-    test_size=5000,
-    seed=42
-)
+split = ds["train"].train_test_split(test_size=5000, seed=42)
 
-split["test"].save_to_disk(
-    "data/openhermes_val"
-)
+split["test"].save_to_disk("data/openhermes_val")
 
-print("saved")
+print(
+    f"Saved {len(split['test'])} examples to data/openhermes_val "
+    "(plain Dataset, no split key)"
+)

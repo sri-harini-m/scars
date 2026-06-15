@@ -20,6 +20,6 @@ batch_size: 1
 
 gradient_accumulation_steps: 16
 
-save_steps: 200
+save_steps: 50
 
 bf16: true

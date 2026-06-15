@@ -15,11 +15,16 @@ from utils.dataset_utils import format_openhermes
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-BASE_MODEL = "checkpoints/original"
-
 N_POINTS = 30
 MAX_SAMPLES = 512
 SEQ_LEN = 512
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--target", required=True, help="path to target checkpoint (theta_r, theta_ft, etc.)")
+    parser.add_argument("--tag", required=True, help="label for output files, e.g. 'recovered', 'control', 'degraded'")
+    parser.add_argument("--base", default="checkpoints/original", help="path to base checkpoint (theta_0)")
+    return parser.parse_args()
 
 def load_model(path):
     model = AutoModelForCausalLM.from_pretrained(
@@ -34,8 +39,7 @@ def load_eval_dataset(tokenizer):
     ds = load_from_disk("data/openhermes_val")
     texts = []
     for x in ds:
-        messages = format_openhermes(x)["messages"]
-        txt = tokenizer.apply_chat_template(messages, tokenize=False).strip()
+        txt = x["conversations"][0]["value"].strip()
         if len(txt) > 100:
             texts.append(txt)
         if len(texts) >= MAX_SAMPLES:
@@ -52,10 +56,7 @@ def evaluate_loss(model, tokenizer, texts):
                 max_length=SEQ_LEN,
                 return_tensors="pt"
             )
-            enc = {
-                k: v.to(DEVICE)
-                for k, v in enc.items()
-            }
+            enc = {k: v.to(DEVICE) for k, v in enc.items()}
             out = model(**enc, labels=enc["input_ids"])
             losses.append(out.loss.item())
     return float(np.mean(losses))
@@ -64,42 +65,37 @@ def evaluate_loss(model, tokenizer, texts):
 def interpolate_model(model_a, model_b, alpha):
     interp = copy.deepcopy(model_a)
     with torch.no_grad():
-        for p_i, p_a, p_b in zip(interp.parameters(), model_a.parameters(), model_b.parameters()):
+        for p_i, p_a, p_b in zip(
+            interp.parameters(), 
+            model_a.parameters(), 
+            model_b.parameters()
+        ):
             p_i.copy_((1 - alpha) * p_a + alpha * p_b)
     return interp
 
 
 def main():
-        
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--target", required=True, help="path to target checkpoint")
-    parser.add_argument("--tag", required=True, help="label for output files, e.g. 'recovered' or 'control'")
-    args = parser.parse_args()
+    args = parse_args()
+    os.makedirs("results/rob", exist_ok=True)
 
-    TARGET_MODEL = args.target
-    
-    os.makedirs(
-        "results/rob",
-        exist_ok=True
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        BASE_MODEL
-    )
+    tokenizer = AutoTokenizer.from_pretrained(args.base)
     tokenizer.pad_token = tokenizer.eos_token
 
-    print("Loading models...")
-    theta0 = load_model(BASE_MODEL).to(DEVICE)
+    print(f"Loading base model from {args.base}")
+    theta0 = load_model(args.base).to(DEVICE)
 
-    thetar = load_model(TARGET_MODEL).to(DEVICE)
+    print(f"Loading target model from {args.target}")
+    theta_target = load_model(args.target).to(DEVICE)
 
-    texts = load_eval_dataset(tokenizer)
-
+    texts = load_eval_dataset()
+    print(f"Loaded {len(texts)} evaluation texts")
+    
     alphas = np.linspace(0, 1, N_POINTS)
 
     losses = []
 
-    for alpha in tqdm(alphas):
-        interp = interpolate_model(theta0, thetar, alpha)
+    for alpha in tqdm(alphas, desc=f"Interpolating {args.tag}"):
+        interp = interpolate_model(theta0, theta_target, alpha)
         interp = interp.to(DEVICE)
         loss = evaluate_loss(interp, tokenizer, texts)
         losses.append(loss)
@@ -110,29 +106,50 @@ def main():
 
     plt.figure(figsize=(8,5))
 
-    plt.plot(
-        alphas,
-        losses,
-        marker="o"
-    )
-
-    plt.xlabel("alpha")
+    plt.plot(alphas, losses, marker="o")
+    plt.xlabel(f"alpha  (0 = theta_0, 1 = {args.tag})")
     plt.ylabel("loss")
-    plt.title("ROB interpolation curve")
-
+    plt.title(f"ROB interpolation curve: theta_0 -> {args.tag}")
     plt.savefig(f"results/rob/loss_curve_{args.tag}.png", dpi=300)
+    plt.close()
 
     result = {
         "rob": float(rob),
         "max_loss": float(max(losses)),
-        "loss_start": float(losses[0]),
-        "loss_end": float(losses[-1])
+        "loss_at_theta0": float(losses[0]),
+        "loss_at_target": float(losses[-1]),
+        "base_model": args.base,
+        "target_model": args.target,
+        "tag": args.tag,
     }
 
     with open(f"results/rob/rob_{args.tag}.json", "w") as f:
         json.dump(result, f, indent=2)
 
     print(result)
+
+    control_path = f"results/rob/rob_control.json"
+    if os.path.exists(control_path) and args.tag != "control":
+        with open(control_path) as f:
+            ctrl = json.load(f)
+        control_rob = ctrl["rob"]
+        rdf = rob / control_rob if control_rob > 0 else float("inf")
+
+        rdf_result = {
+            "rob": float(rob),
+            "control_rob": float(control_rob),
+            "rdf": rdf,
+            "tag": args.tag,
+        }
+
+        with open(f"results/rob/rdf_{args.tag}.json", "w") as f:
+            json.dump(rdf_result, f, indent=2)
+
+        print(f"\nRDF ({args.tag}) = {rdf:.3f}  (ROB={rob:.4f} / control={control_rob:.4f})")
+        if rdf > 1.0:
+            print("-> Round-trip left a geometric scar beyond direct fine-tuning.")
+        else:
+            print("-> No measurable extra scar from the round-trip.")
 
 
 if __name__ == "__main__":
