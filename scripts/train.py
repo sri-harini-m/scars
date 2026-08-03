@@ -1,8 +1,13 @@
 # scripts/train.py
 
-import torch 
-from datasets import load_dataset
-from transformers import AutoTokenizer, AutoModelForCausalLM, Trainer, TrainingArguments
+import torch
+from transformers import (
+    AutoTokenizer,
+    AutoModelForCausalLM,
+    Trainer,
+    TrainingArguments,
+    DataCollatorForSeq2Seq,
+)
 from utils.config import load_config
 from utils.dataset_utils import load_training_dataset
 import argparse
@@ -10,27 +15,20 @@ import argparse
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--config",
-    required=True,
-)
-
+parser.add_argument("--config", required=True)
 args = parser.parse_args()
 cfg = load_config(args.config)
 
 print("Loading dataset...")
-dataset = load_training_dataset(
-    cfg["dataset"]
-)
+dataset = load_training_dataset(cfg["dataset"])
 print(dataset)
 
 print("Loading tokenizer...")
-tokenizer = AutoTokenizer.from_pretrained(
-    cfg["model_name"]
-)
+tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
 
 if tokenizer.pad_token is None:
     tokenizer.pad_token = tokenizer.eos_token
+
 print("Tokenizing...")
 
 def tokenize(example):
@@ -42,23 +40,23 @@ def tokenize(example):
         text,
         truncation=True,
         max_length=cfg["max_length"],
-        padding=False
+        padding=False,  
     )
     result["labels"] = result["input_ids"].copy()
-
     return result
 
-dataset = dataset.map(
-    tokenize, 
+train_dataset = dataset["train"].map(
+    tokenize,
     batched=True,
     remove_columns=dataset["train"].column_names,
-    load_from_cache_file=False
+    load_from_cache_file=False,
 )
 
 print("Loading model...")
 model = AutoModelForCausalLM.from_pretrained(
     cfg["model_name"],
     torch_dtype=torch.bfloat16,
+    device_map="auto",
 )
 
 training_args = TrainingArguments(
@@ -70,24 +68,33 @@ training_args = TrainingArguments(
     save_strategy="steps",
     save_steps=cfg["save_steps"],
     bf16=True,
-    save_total_limit=2,     
-    save_only_model=True, 
+    save_total_limit=2,
+    save_only_model=True,
     logging_steps=20,
-    report_to="none"
+    report_to="none",
+    no_cuda=False,
+    fsdp="",                          
+    dataloader_pin_memory=False,     
+)
+
+collator = DataCollatorForSeq2Seq(
+    tokenizer=tokenizer,
+    model=model,
+    padding=True,
+    pad_to_multiple_of=8,
+    label_pad_token_id=-100,
 )
 
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=dataset["train"]
+    train_dataset=train_dataset,
+    data_collator=collator,
 )
 
 trainer.train()
 
-trainer.save_model(
-    cfg['output_dir']
-)
+trainer.save_model(cfg["output_dir"])
+tokenizer.save_pretrained(cfg["output_dir"])
 
-tokenizer.save_pretrained(
-    cfg['output_dir']
-)
+print(f"\nDone. Model saved to {cfg['output_dir']}")

@@ -10,7 +10,7 @@ output_dir: checkpoints/degraded
 
 epochs: 1
 
-learning_rate: 2e-5
+learning_rate: 0.00002
 
 weight_decay: 0.01
 
