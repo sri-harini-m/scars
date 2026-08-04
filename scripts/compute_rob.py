@@ -99,7 +99,7 @@ def main():
     print(f"Loading target model from {args.target}")
     theta_target = load_model(args.target, device=DEVICE)
 
-    texts = load_eval_dataset()
+    texts = load_eval_dataset(tokenizer)
     print(f"Loaded {len(texts)} evaluation texts")
     
     alphas = np.linspace(0, 1, N_POINTS)
