@@ -24,19 +24,13 @@ print(dataset)
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
 
-# Llama's eos token id is 128009 - a valid vocabulary token.
-# We must NOT use it as pad_token because when the collator pads labels
-# it would insert real token ids that the loss function then tries to
-# predict, causing the "t >= 0 && t < n_classes" assertion - the loss
-# sees a label that looks valid but is in a padding position with no
-# corresponding input context.
-#
-# Instead add a dedicated pad token that sits outside the vocab, or
-# use unk_token if available. For Llama we add a new pad token.
+# Add a dedicated pad token rather than reusing eos_token (128009).
+# Reusing eos as pad causes the collator to insert real token ids into
+# label padding positions, which triggers the nll_loss CUDA assert.
+# This check handles the case where a previous training run already
+# saved the tokenizer with <|pad|> added - we don't add it twice.
 if tokenizer.pad_token is None:
     tokenizer.add_special_tokens({"pad_token": "<|pad|>"})
-    # Resize model embeddings to account for the new token - done after
-    # model load below
 
 print("Tokenizing...")
 
@@ -68,16 +62,18 @@ print("Loading model...")
 model = AutoModelForCausalLM.from_pretrained(
     cfg["model_name"],
     torch_dtype=torch.bfloat16,
-    device_map="auto",
     attn_implementation="eager",
+    # No device_map here - ZeRO-3 via torchrun handles device placement.
+    # device_map="auto" conflicts with DDP/DeepSpeed and causes zero loss.
 )
 
-# Resize embeddings if we added a pad token
-if tokenizer.pad_token == "<|pad|>":
+# Resize embeddings to account for the added <|pad|> token.
+# Must happen before DeepSpeed wraps the model, so do it here.
+# Only resize if vocab sizes are mismatched to avoid unnecessary work
+# on subsequent runs where the tokenizer already has the token.
+if len(tokenizer) != model.config.vocab_size:
     model.resize_token_embeddings(len(tokenizer))
-
-# Enable gradient checkpointing to reduce activation memory
-model.gradient_checkpointing_enable()
+    print(f"Resized embeddings to {len(tokenizer)}")
 
 training_args = TrainingArguments(
     output_dir=cfg["output_dir"],
@@ -92,15 +88,13 @@ training_args = TrainingArguments(
     save_only_model=True,
     logging_steps=20,
     report_to="none",
-    # Gradient checkpointing is set on the model above; this tells
-    # Trainer not to override it
-    gradient_checkpointing=False,
+    deepspeed="configs/ds_zero3.json",
 )
 
-# label_pad_token_id=-100 is critical: the collator will replace all
-# padding positions in the labels tensor with -100, which tells
-# CrossEntropyLoss to ignore those positions entirely. Without this,
-# padding token ids end up in labels and the loss tries to predict them.
+# DataCollatorForSeq2Seq pads both input_ids and labels per batch,
+# masking label padding positions with -100 so the loss ignores them.
+# This is correct for causal LM - do not switch to DataCollatorWithPadding
+# which does not handle labels.
 collator = DataCollatorForSeq2Seq(
     tokenizer=tokenizer,
     model=model,

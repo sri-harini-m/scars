@@ -1,0 +1,93 @@
+W0805 11:34:32.228000 3111991 site-packages/torch/distributed/run.py:874] 
+W0805 11:34:32.228000 3111991 site-packages/torch/distributed/run.py:874] *****************************************
+W0805 11:34:32.228000 3111991 site-packages/torch/distributed/run.py:874] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0805 11:34:32.228000 3111991 site-packages/torch/distributed/run.py:874] *****************************************
+Loading dataset...
+Loading dataset...
+DatasetDict({
+    train: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 18019
+    })
+    test: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 2003
+    })
+})
+Loading tokenizer...
+DatasetDict({
+    train: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 18019
+    })
+    test: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 2003
+    })
+})
+Loading tokenizer...
+Loading dataset...
+DatasetDict({
+    train: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 18019
+    })
+    test: Dataset({
+        features: ['prompt', 'completion', 'messages'],
+        num_rows: 2003
+    })
+})
+Loading tokenizer...
+Tokenizing...
+Tokenizing...
+Tokenizing...
+Map:   0%|          | 0/18019 [00:00<?, ? examples/s]Map:   0%|          | 0/18019 [00:00<?, ? examples/s]Map:   0%|          | 0/18019 [00:00<?, ? examples/s]Map:   6%|▌         | 1000/18019 [00:00<00:02, 6288.18 examples/s]Map:   6%|▌         | 1000/18019 [00:00<00:03, 5088.12 examples/s]Map:  11%|█         | 2000/18019 [00:00<00:01, 8014.15 examples/s]Map:   6%|▌         | 1000/18019 [00:00<00:03, 4601.49 examples/s]Map:  11%|█         | 2000/18019 [00:00<00:02, 6256.22 examples/s]Map:  17%|█▋        | 3000/18019 [00:00<00:02, 7174.68 examples/s]Map:  17%|█▋        | 3000/18019 [00:00<00:01, 7756.91 examples/s]Map:  22%|██▏       | 4000/18019 [00:00<00:01, 7673.76 examples/s]Map:  17%|█▋        | 3000/18019 [00:00<00:02, 6887.88 examples/s]Map:  22%|██▏       | 4000/18019 [00:00<00:01, 7713.58 examples/s]Map:  28%|██▊       | 5000/18019 [00:00<00:01, 7964.43 examples/s]Map:  22%|██▏       | 4000/18019 [00:00<00:02, 6796.63 examples/s]Map:  28%|██▊       | 5000/18019 [00:00<00:01, 7932.15 examples/s]Map:  33%|███▎      | 6000/18019 [00:00<00:01, 7780.44 examples/s]Map:  28%|██▊       | 5000/18019 [00:00<00:01, 7239.40 examples/s]Map:  33%|███▎      | 6000/18019 [00:00<00:01, 8015.29 examples/s]Map:  33%|███▎      | 6000/18019 [00:00<00:01, 7560.54 examples/s]Map:  39%|███▉      | 7000/18019 [00:00<00:01, 7133.49 examples/s]Map:  39%|███▉      | 7000/18019 [00:00<00:01, 7537.57 examples/s]Map:  39%|███▉      | 7000/18019 [00:00<00:01, 7607.31 examples/s]Map:  44%|████▍     | 8000/18019 [00:01<00:01, 7007.96 examples/s]Map:  44%|████▍     | 8000/18019 [00:01<00:01, 7343.14 examples/s]Map:  44%|████▍     | 8000/18019 [00:01<00:01, 7573.30 examples/s]Map:  50%|████▉     | 9000/18019 [00:01<00:01, 7151.04 examples/s]Map:  50%|████▉     | 9000/18019 [00:01<00:01, 7123.33 examples/s]Map:  55%|█████▌    | 10000/18019 [00:01<00:01, 7774.49 examples/s]Map:  50%|████▉     | 9000/18019 [00:01<00:01, 7099.78 examples/s]Map:  55%|█████▌    | 10000/18019 [00:01<00:01, 7024.85 examples/s]Map:  61%|██████    | 11000/18019 [00:01<00:00, 8105.09 examples/s]Map:  55%|█████▌    | 10000/18019 [00:01<00:01, 6971.66 examples/s]Map:  67%|██████▋   | 12000/18019 [00:01<00:00, 8400.93 examples/s]Map:  61%|██████    | 11000/18019 [00:01<00:01, 6989.37 examples/s]Map:  61%|██████    | 11000/18019 [00:01<00:01, 6855.75 examples/s]Map:  72%|███████▏  | 13000/18019 [00:01<00:00, 8473.20 examples/s]Map:  67%|██████▋   | 12000/18019 [00:01<00:00, 7105.26 examples/s]Map:  67%|██████▋   | 12000/18019 [00:01<00:00, 7140.16 examples/s]Map:  78%|███████▊  | 14000/18019 [00:01<00:00, 8226.04 examples/s]Map:  72%|███████▏  | 13000/18019 [00:01<00:00, 7304.87 examples/s]Map:  72%|███████▏  | 13000/18019 [00:01<00:00, 7326.84 examples/s]Map:  83%|████████▎ | 15000/18019 [00:01<00:00, 8126.22 examples/s]Map:  78%|███████▊  | 14000/18019 [00:01<00:00, 7390.43 examples/s]Map:  89%|████████▉ | 16000/18019 [00:02<00:00, 8339.57 examples/s]Map:  78%|███████▊  | 14000/18019 [00:01<00:00, 7494.17 examples/s]Map:  83%|████████▎ | 15000/18019 [00:02<00:00, 7935.18 examples/s]Map:  89%|████████▉ | 16000/18019 [00:02<00:00, 8222.02 examples/s]Map:  83%|████████▎ | 15000/18019 [00:02<00:00, 7648.26 examples/s]Map:  94%|█████████▍| 17000/18019 [00:02<00:00, 7954.34 examples/s]Map:  89%|████████▉ | 16000/18019 [00:02<00:00, 7951.91 examples/s]Map:  94%|█████████▍| 17000/18019 [00:02<00:00, 8363.55 examples/s]Map: 100%|█████████▉| 18000/18019 [00:02<00:00, 7998.03 examples/s]Map: 100%|██████████| 18019/18019 [00:02<00:00, 7799.85 examples/s]
+Train dataset size: 18019
+Loading model...
+Map:  94%|█████████▍| 17000/18019 [00:02<00:00, 8350.23 examples/s]Map: 100%|█████████▉| 18000/18019 [00:02<00:00, 8653.13 examples/s]Map: 100%|██████████| 18019/18019 [00:02<00:00, 7653.78 examples/s]
+Train dataset size: 18019
+Loading model...
+Map: 100%|██████████| 18019/18019 [00:02<00:00, 7473.79 examples/s]
+Train dataset size: 18019
+Loading model...
+Loading checkpoint shards:   0%|          | 0/7 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/7 [00:00<?, ?it/s]Loading checkpoint shards:   0%|          | 0/7 [00:00<?, ?it/s]Loading checkpoint shards:  14%|█▍        | 1/7 [00:14<01:24, 14.08s/it]Loading checkpoint shards:  14%|█▍        | 1/7 [00:14<01:24, 14.06s/it]Loading checkpoint shards:  14%|█▍        | 1/7 [00:13<01:23, 13.94s/it]Loading checkpoint shards:  29%|██▊       | 2/7 [00:28<01:10, 14.15s/it]Loading checkpoint shards:  29%|██▊       | 2/7 [00:28<01:11, 14.22s/it]Loading checkpoint shards:  29%|██▊       | 2/7 [00:28<01:10, 14.20s/it]Loading checkpoint shards:  43%|████▎     | 3/7 [00:42<00:57, 14.28s/it]Loading checkpoint shards:  43%|████▎     | 3/7 [00:42<00:57, 14.30s/it]Loading checkpoint shards:  43%|████▎     | 3/7 [00:42<00:57, 14.32s/it]Loading checkpoint shards:  57%|█████▋    | 4/7 [00:58<00:44, 14.81s/it]Loading checkpoint shards:  57%|█████▋    | 4/7 [00:58<00:44, 14.83s/it]Loading checkpoint shards:  57%|█████▋    | 4/7 [00:58<00:44, 14.79s/it]Loading checkpoint shards:  71%|███████▏  | 5/7 [01:12<00:29, 14.56s/it]Loading checkpoint shards:  71%|███████▏  | 5/7 [01:12<00:29, 14.54s/it]Loading checkpoint shards:  71%|███████▏  | 5/7 [01:12<00:29, 14.57s/it]Loading checkpoint shards:  86%|████████▌ | 6/7 [01:26<00:14, 14.38s/it]Loading checkpoint shards:  86%|████████▌ | 6/7 [01:26<00:14, 14.37s/it]Loading checkpoint shards:  86%|████████▌ | 6/7 [01:26<00:14, 14.39s/it]Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 11.99s/it]Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 13.38s/it]
+Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 11.98s/it]Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 13.35s/it]
+Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 12.01s/it]Loading checkpoint shards: 100%|██████████| 7/7 [01:33<00:00, 13.38s/it]
+Resized embeddings to 128257
+Resized embeddings to 128257
+Resized embeddings to 128257
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/deepspeed.py:24: FutureWarning: transformers.deepspeed module is deprecated and will be removed in a future version. Please import deepspeed modules directly from transformers.integrations
+  warnings.warn(
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+  0%|          | 0/375 [00:00<?, ?it/s]/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.all_gather_into_tensor` is deprecated. Please use `torch.distributed.all_gather_single` instead.
+  return func(*args, **kwargs)
+[rank0]:[W805 11:37:49.846762775 CUDACachingAllocator.cpp:508] expandable_segments: memory mapping failed with OOM on device 0 while trying to map 20971520 bytes (free: 4259840, total: 33826537472).
+[rank1]:[W805 11:37:49.846831784 CUDACachingAllocator.cpp:508] expandable_segments: memory mapping failed with OOM on device 1 while trying to map 20971520 bytes (free: 4259840, total: 33826537472).
+[rank2]:[W805 11:37:49.848055688 CUDACachingAllocator.cpp:508] expandable_segments: memory mapping failed with OOM on device 2 while trying to map 20971520 bytes (free: 12648448, total: 33826537472).
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.reduce_scatter_tensor` is deprecated. Please use `torch.distributed.reduce_scatter_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.reduce_scatter_tensor` is deprecated. Please use `torch.distributed.reduce_scatter_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/torch/distributed/c10d_logger.py:83: FutureWarning: `torch.distributed.reduce_scatter_tensor` is deprecated. Please use `torch.distributed.reduce_scatter_single` instead.
+  return func(*args, **kwargs)
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/trainer.py:2349: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  self.lr_scheduler.step()
+[2026-08-05 11:40:04,677] [WARNING] [stage3.py:2597:step] 1 pytorch allocator cache flushes since last step. this happens when there is high memory pressure and is detrimental to performance. if this is happening frequently consider adjusting settings to reduce memory consumption. If you are unable to make the cache flushes go away consider adding get_accelerator().empty_cache() calls in your training loop to ensure that all ranks flush their caches at the same time
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/trainer.py:2349: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  self.lr_scheduler.step()
+/home/sriharinim/miniconda3/envs/code-halu/lib/python3.12/site-packages/transformers/trainer.py:2349: UserWarning: Detected call of `lr_scheduler.step()` before `optimizer.step()`. In PyTorch 1.1.0 and later, you should call them in the opposite order: `optimizer.step()` before `lr_scheduler.step()`.  Failure to do this will result in PyTorch skipping the first value of the learning rate schedule. See more details at https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
+  self.lr_scheduler.step()
+  0%|          | 1/375 [02:23<14:53:37, 143.36s/it]
