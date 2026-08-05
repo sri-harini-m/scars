@@ -24,11 +24,6 @@ print(dataset)
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
 
-# Add a dedicated pad token rather than reusing eos_token (128009).
-# Reusing eos as pad causes the collator to insert real token ids into
-# label padding positions, which triggers the nll_loss CUDA assert.
-# This check handles the case where a previous training run already
-# saved the tokenizer with <|pad|> added - we don't add it twice.
 if tokenizer.pad_token is None:
     tokenizer.add_special_tokens({"pad_token": "<|pad|>"})
 
@@ -44,7 +39,7 @@ def tokenize(example):
         text,
         truncation=True,
         max_length=cfg["max_length"],
-        padding=False,  # collator handles per-batch padding
+        padding=False,
     )
     result["labels"] = result["input_ids"].copy()
     return result
@@ -62,15 +57,12 @@ print("Loading model...")
 model = AutoModelForCausalLM.from_pretrained(
     cfg["model_name"],
     torch_dtype=torch.bfloat16,
-    attn_implementation="eager",
-    # No device_map here - ZeRO-3 via torchrun handles device placement.
-    # device_map="auto" conflicts with DDP/DeepSpeed and causes zero loss.
+    attn_implementation="sdpa",
 )
 
-# Resize embeddings to account for the added <|pad|> token.
-# Must happen before DeepSpeed wraps the model, so do it here.
-# Only resize if vocab sizes are mismatched to avoid unnecessary work
-# on subsequent runs where the tokenizer already has the token.
+model.gradient_checkpointing_enable()
+model.config.use_cache = False
+
 if len(tokenizer) != model.config.vocab_size:
     model.resize_token_embeddings(len(tokenizer))
     print(f"Resized embeddings to {len(tokenizer)}")
@@ -91,10 +83,6 @@ training_args = TrainingArguments(
     deepspeed="configs/ds_zero3.json",
 )
 
-# DataCollatorForSeq2Seq pads both input_ids and labels per batch,
-# masking label padding positions with -100 so the loss ignores them.
-# This is correct for causal LM - do not switch to DataCollatorWithPadding
-# which does not handle labels.
 collator = DataCollatorForSeq2Seq(
     tokenizer=tokenizer,
     model=model,
