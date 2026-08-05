@@ -24,8 +24,11 @@ print(dataset)
 print("Loading tokenizer...")
 tokenizer = AutoTokenizer.from_pretrained(cfg["model_name"])
 
+# if tokenizer.pad_token is None:
+#     tokenizer.add_special_tokens({"pad_token": "<|pad|>"})
+
 if tokenizer.pad_token is None:
-    tokenizer.add_special_tokens({"pad_token": "<|pad|>"})
+    tokenizer.pad_token = tokenizer.eos_token
 
 print("Tokenizing...")
 
@@ -63,9 +66,12 @@ model = AutoModelForCausalLM.from_pretrained(
 model.gradient_checkpointing_enable()
 model.config.use_cache = False
 
-if len(tokenizer) != model.config.vocab_size:
-    model.resize_token_embeddings(len(tokenizer))
-    print(f"Resized embeddings to {len(tokenizer)}")
+print(model.is_gradient_checkpointing)
+print(model.config.use_cache)
+
+# if len(tokenizer) != model.config.vocab_size:
+#     model.resize_token_embeddings(len(tokenizer)) 
+#     print(f"Resized embeddings to {len(tokenizer)}")
 
 training_args = TrainingArguments(
     output_dir=cfg["output_dir"],
@@ -97,6 +103,12 @@ trainer = Trainer(
     train_dataset=train_dataset,
     data_collator=collator,
 )
+
+for i in range(torch.cuda.device_count()):
+    print(
+        f"GPU {i}: "
+        f"{torch.cuda.memory_allocated(i)/1024**3:.2f} GB allocated"
+    )
 
 trainer.train()
 
